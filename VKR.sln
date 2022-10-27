@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VKR.API", "VKR.API\VKR.API.csproj", "{527344CE-2B7F-4FC8-8335-F9C99E2E874D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VKR.API", "VKR.API\VKR.API.csproj", "{527344CE-2B7F-4FC8-8335-F9C99E2E874D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VKR.DAL", "VKR.DAL\VKR.DAL.csproj", "{596D546C-8CC0-44FA-9EA8-A88485DE0B66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VKR.Common", "VKR.Common\VKR.Common.csproj", "{41D66BAA-5C52-4AB1-A731-B5DDA6B4D1C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{527344CE-2B7F-4FC8-8335-F9C99E2E874D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{527344CE-2B7F-4FC8-8335-F9C99E2E874D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{527344CE-2B7F-4FC8-8335-F9C99E2E874D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{596D546C-8CC0-44FA-9EA8-A88485DE0B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{596D546C-8CC0-44FA-9EA8-A88485DE0B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{596D546C-8CC0-44FA-9EA8-A88485DE0B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{596D546C-8CC0-44FA-9EA8-A88485DE0B66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41D66BAA-5C52-4AB1-A731-B5DDA6B4D1C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41D66BAA-5C52-4AB1-A731-B5DDA6B4D1C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41D66BAA-5C52-4AB1-A731-B5DDA6B4D1C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41D66BAA-5C52-4AB1-A731-B5DDA6B4D1C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
