@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,23 @@ namespace VKR.API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
+        public async Task<UserModel> GetCurrentUser()
+        {
+            var userIdString = User.Claims.FirstOrDefault(c=>c.Type=="Id")?.Value;
+            if(Guid.TryParse(userIdString, out var userId))
+            {
+                return await _usersService.GetUser(userId);
+            }
+            else
+            {
+                throw new Exception("You are not authorized");
+            }
+        }
+
+
+        [HttpGet]
+        [Authorize]
         public async Task<List<UserModel>> GetUsers()
         {
            return await _usersService.GetUsers();

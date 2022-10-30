@@ -14,6 +14,15 @@ namespace VKR.DAL
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.
+                Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+        }
+
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
             => optionsBuilder.UseNpgsql(b => b.MigrationsAssembly("VKR.API"));
 
