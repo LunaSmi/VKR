@@ -27,6 +27,7 @@ namespace VKR.DAL
             => optionsBuilder.UseNpgsql(b => b.MigrationsAssembly("VKR.API"));
 
         public DbSet<User> Users => Set<User>();
+        public DbSet<UserSession> Sessions => Set<UserSession>();
 
     }
 }

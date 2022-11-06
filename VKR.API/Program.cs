@@ -6,6 +6,7 @@ using VKR.API;
 using VKR.API.Configs;
 using VKR.API.Services;
 using Microsoft.OpenApi.Models;
+using VKR.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,7 +112,7 @@ using(var serviceScope = ((IApplicationBuilder)app).ApplicationServices.GetServi
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseTokenValidation();
 app.MapControllers();
 
 app.Run();

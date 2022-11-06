@@ -25,7 +25,9 @@ namespace VKR.API.Controllers
         [HttpPost]
         public async Task CreateUser(CreateUserModel createUserModel)
         {
-           await _usersService.CreateUser(createUserModel);
+            if (await _usersService.CheckUserExistAsync(createUserModel.Email))
+                throw new Exception("user is exist");
+            await _usersService.CreateUser(createUserModel);
         }
 
         [HttpGet]

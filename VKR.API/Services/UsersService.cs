@@ -9,6 +9,7 @@ using VKR.API.Configs;
 using VKR.API.Models;
 using VKR.Common;
 using VKR.DAL;
+using VKR.DAL.Entities;
 
 namespace VKR.API.Services
 {
@@ -29,11 +30,28 @@ namespace VKR.API.Services
         }
 
 
-        public async Task CreateUser(CreateUserModel createUserModel)
+        public async Task<bool> CheckUserExistAsync(string email)
+        {
+            return await _context.Users.AllAsync(x=>x.Email.ToLower() == email.ToLower());
+        }
+
+        public async Task Delete(Guid id)
+        {
+            var dbUser = await _context.Users.FirstOrDefaultAsync(x=>x.Id == id);
+            if(dbUser != null)
+            {
+                _context.Users.Remove(dbUser);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<Guid> CreateUser(CreateUserModel createUserModel)
         {
             var dbuser = _mapper.Map<VKR.DAL.Entities.User>(createUserModel);
-            await _context.Users.AddAsync(dbuser);
+            var user = await _context.Users.AddAsync(dbuser);
             await _context.SaveChangesAsync();
+
+            return user.Entity.Id;
         }
 
         public async Task<List<UserModel>> GetUsers()
@@ -47,10 +65,41 @@ namespace VKR.API.Services
             return _mapper.Map<UserModel>(user);
         }
 
+
+
+
         public async Task<TokenModel> GetTokens(string login, string password)
         {
             var user = await GeyUserByCredention(login, password);
-            return GenerateTokens(user);
+            var session = await _context.Sessions.AddAsync(new VKR.DAL.Entities.UserSession
+            {
+                Id= Guid.NewGuid(),
+                UserId = user.Id,
+                Created = DateTime.UtcNow,
+                RefreshToken = Guid.NewGuid()
+            });
+            await _context.SaveChangesAsync();
+            return GenerateTokens(session.Entity);
+        }
+
+        public async Task<UserSession> GetSessionById(Guid id)
+        {
+            var session = await _context.Sessions.FirstOrDefaultAsync(s=> s.Id == id);
+            if (session == null)
+            {
+                throw new Exception("session is not found");
+            }
+            return session;
+        }
+
+        private async Task<UserSession> GetSessionByRefreshToken(Guid id)
+        {
+            var session = await _context.Sessions.Include(x=>x.User).FirstOrDefaultAsync(s => s.RefreshToken == id);
+            if (session == null)
+            {
+                throw new Exception("session is not found");
+            }
+            return session;
         }
 
         public async Task<TokenModel> GetTokensByRefreshToken(string refreshToken)
@@ -72,11 +121,21 @@ namespace VKR.API.Services
                 throw new SecurityTokenException("Invalid token");
             }
 
-            if(principal.Claims.FirstOrDefault(c=>c.Type=="Id")?.Value is String userIdString
-                && Guid.TryParse(userIdString,out var userId))
+            if(principal.Claims.FirstOrDefault(c=>c.Type == "refreshToken")?.Value is String refreshIdString
+                && Guid.TryParse(refreshIdString,out var refreshId) )
             {
-                var user = await GetUserById(userId);
-                return GenerateTokens(user);
+                var session = await GetSessionByRefreshToken(refreshId);
+                if (!session.IsActive)
+                {
+                    throw new Exception("session is not active");
+                }
+
+                var user = session.User;
+
+                session.RefreshToken = Guid.NewGuid();
+                await _context.SaveChangesAsync();
+
+                return GenerateTokens(session);
             }
             else
             {
@@ -87,17 +146,23 @@ namespace VKR.API.Services
 
 
 
-        private TokenModel GenerateTokens(VKR.DAL.Entities.User user)
+        private TokenModel GenerateTokens(VKR.DAL.Entities.UserSession session)
         {
             var dtNow = DateTime.Now;
+            if (session.User == null)
+            {
+                throw new Exception();
+            }
+
             var jwt = new JwtSecurityToken(
                 issuer: _authConfig.Issuer,
                 audience: _authConfig.Audience,
                 notBefore: dtNow,
                 claims: new Claim[]
                 {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType,user.Name),
-                    new Claim("Id",user.Id.ToString()),
+                    new Claim(ClaimsIdentity.DefaultNameClaimType,session.User.Name),
+                    new Claim("sessionId",session.Id.ToString()),
+                    new Claim("userId",session.User.Id.ToString()),
                 },
                 expires: DateTime.Now.AddMinutes(_authConfig.LifeTime),
                 signingCredentials: new SigningCredentials(_authConfig.SimmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
@@ -107,7 +172,7 @@ namespace VKR.API.Services
                 notBefore: dtNow,
                 claims: new Claim[]
                 {
-                    new Claim("Id",user.Id.ToString()),
+                    new Claim("refreshToken",session.RefreshToken.ToString()),
                 },
                 expires: DateTime.Now.AddHours(_authConfig.LifeTime),
                 signingCredentials: new SigningCredentials(_authConfig.SimmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
@@ -122,7 +187,7 @@ namespace VKR.API.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
-                throw new ArgumentNullException("User Not Found");
+                throw new ArgumentNullException(nameof(user),"User Not Found");
             }
             return user;
         }
@@ -132,7 +197,7 @@ namespace VKR.API.Services
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == login.ToLower());
             if (user == null)
             {
-                throw new ArgumentNullException("User Not Found");
+                throw new ArgumentNullException(nameof(user),"User Not Found");
             }
             if (!HashHelper.Verify(password, user.PasswordHash))
             {
