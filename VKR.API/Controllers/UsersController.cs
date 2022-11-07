@@ -22,11 +22,66 @@ namespace VKR.API.Controllers
             _usersService = usersService;
         }
 
+        [HttpGet]
+        public async Task<FileResult> GetUserAvatar(Guid userId)
+        {
+            var attach = await _usersService.GetUserAvatar(userId);
+            return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.MimeType);
+        }
+
+        [HttpGet]
+        public async Task<FileResult> DownloadAvatar(Guid userId)
+        {
+            var attach = await _usersService.GetUserAvatar(userId);
+
+            HttpContext.Response.ContentType = attach.MimeType;
+            FileContentResult result = new FileContentResult(System.IO.File.ReadAllBytes(attach.FilePath), attach.MimeType)
+            {
+                FileDownloadName = attach.Name
+            };
+
+            return result;
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task AddAvatarToUser(MetaDataModel metaData)
+        {
+            var userIdString = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                var tempFileInfo = new FileInfo(Path.Combine(Path.GetTempPath(),metaData.TempId.ToString()));
+                if (!tempFileInfo.Exists)
+                {
+                    throw new Exception("File is not found");
+                }
+                else
+                {
+                    var path = Path.Combine(Directory.GetCurrentDirectory(),"Files",metaData.TempId.ToString());
+
+                    var destFileInfo = new FileInfo(path);
+                    if (destFileInfo.Directory != null && !destFileInfo.Directory.Exists)
+                        destFileInfo.Directory.Create();
+
+                    System.IO.File.Copy(tempFileInfo.FullName, path, true);
+                    await _usersService.AddAvatarToUser(userId, metaData,path);
+
+                }
+            }
+            else
+            {
+                throw new Exception("You are not authorized");
+            }
+
+        }
+
         [HttpPost]
         public async Task CreateUser(CreateUserModel createUserModel)
         {
             if (await _usersService.CheckUserExistAsync(createUserModel.Email))
+            {
                 throw new Exception("user is exist");
+            }
             await _usersService.CreateUser(createUserModel);
         }
 

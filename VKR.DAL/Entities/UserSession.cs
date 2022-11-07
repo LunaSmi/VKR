@@ -13,6 +13,7 @@ namespace VKR.DAL.Entities
         public Guid RefreshToken { get; set; }
         public DateTimeOffset Created { get; set; }
         public bool IsActive { get; set; } = true;
-        public virtual User? User { get; set; } 
+
+        public virtual User User { get; set; } = null!;
     }
 }

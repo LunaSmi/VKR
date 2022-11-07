@@ -22,11 +22,47 @@ namespace VKR.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("VKR.DAL.Entities.Attach", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Attaches");
+                });
+
             modelBuilder.Entity("VKR.DAL.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<long?>("AvatarId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("BirthDate")
                         .HasColumnType("timestamp with time zone");
@@ -44,6 +80,8 @@ namespace VKR.API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AvatarId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -76,6 +114,33 @@ namespace VKR.API.Migrations
                     b.ToTable("Sessions");
                 });
 
+            modelBuilder.Entity("VKR.DAL.Entities.Avatar", b =>
+                {
+                    b.HasBaseType("VKR.DAL.Entities.Attach");
+
+                    b.ToTable("Avatars", (string)null);
+                });
+
+            modelBuilder.Entity("VKR.DAL.Entities.Attach", b =>
+                {
+                    b.HasOne("VKR.DAL.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("VKR.DAL.Entities.User", b =>
+                {
+                    b.HasOne("VKR.DAL.Entities.Avatar", "Avatar")
+                        .WithMany()
+                        .HasForeignKey("AvatarId");
+
+                    b.Navigation("Avatar");
+                });
+
             modelBuilder.Entity("VKR.DAL.Entities.UserSession", b =>
                 {
                     b.HasOne("VKR.DAL.Entities.User", "User")
@@ -85,6 +150,15 @@ namespace VKR.API.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("VKR.DAL.Entities.Avatar", b =>
+                {
+                    b.HasOne("VKR.DAL.Entities.Attach", null)
+                        .WithOne()
+                        .HasForeignKey("VKR.DAL.Entities.Avatar", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VKR.DAL.Entities.User", b =>

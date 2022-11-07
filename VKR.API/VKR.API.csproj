@@ -23,4 +23,8 @@
     <ProjectReference Include="..\VKR.DAL\VKR.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Files\" />
+  </ItemGroup>
+
 </Project>

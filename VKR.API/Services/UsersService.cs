@@ -29,15 +29,39 @@ namespace VKR.API.Services
             _authConfig = config.Value;
         }
 
+        public async Task AddAvatarToUser(Guid userId,MetaDataModel meta,string filePath)
+        {
+            var user = await _context.Users.Include(u => u.Avatar).FirstOrDefaultAsync(x=>x.Id==userId);
+            if(user != null)
+            {
+                var avatar = new Avatar
+                {
+                    Owner = user,
+                    MimeType = meta.MimeType,
+                    Name = meta.Name,
+                    Size = meta.Size,
+                    FilePath = filePath,
+                };
+                user.Avatar = avatar;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<AttachModel> GetUserAvatar(Guid userId)
+        {
+            var user = await GetUserById(userId);
+            var attach = _mapper.Map<AttachModel>(user.Avatar);
+            return attach;
+        }
 
         public async Task<bool> CheckUserExistAsync(string email)
         {
-            return await _context.Users.AllAsync(x=>x.Email.ToLower() == email.ToLower());
+            return await _context.Users.AnyAsync(x=>x.Email.ToLower() == email.ToLower());
         }
 
         public async Task Delete(Guid id)
         {
-            var dbUser = await _context.Users.FirstOrDefaultAsync(x=>x.Id == id);
+            var dbUser = await GetUserById(id);
             if(dbUser != null)
             {
                 _context.Users.Remove(dbUser);
@@ -50,7 +74,6 @@ namespace VKR.API.Services
             var dbuser = _mapper.Map<VKR.DAL.Entities.User>(createUserModel);
             var user = await _context.Users.AddAsync(dbuser);
             await _context.SaveChangesAsync();
-
             return user.Entity.Id;
         }
 
@@ -149,10 +172,6 @@ namespace VKR.API.Services
         private TokenModel GenerateTokens(VKR.DAL.Entities.UserSession session)
         {
             var dtNow = DateTime.Now;
-            if (session.User == null)
-            {
-                throw new Exception();
-            }
 
             var jwt = new JwtSecurityToken(
                 issuer: _authConfig.Issuer,
@@ -184,7 +203,7 @@ namespace VKR.API.Services
 
         private async Task<VKR.DAL.Entities.User> GetUserById(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user),"User Not Found");

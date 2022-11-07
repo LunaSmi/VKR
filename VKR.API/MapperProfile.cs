@@ -13,6 +13,8 @@ namespace VKR.API
                 .ForMember(d=>d.BirthDate,m=>m.MapFrom(s=>s.BirthDate.UtcDateTime));
 
             CreateMap<VKR.DAL.Entities.User, Models.UserModel>();
+
+            CreateMap<VKR.DAL.Entities.Avatar, Models.AttachModel>();
         }
     }
 }

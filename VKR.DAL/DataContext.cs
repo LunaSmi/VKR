@@ -20,6 +20,10 @@ namespace VKR.DAL
                 Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            modelBuilder.
+                Entity<Avatar>().
+                ToTable(nameof(Avatars));
         }
 
 
@@ -28,6 +32,8 @@ namespace VKR.DAL
 
         public DbSet<User> Users => Set<User>();
         public DbSet<UserSession> Sessions => Set<UserSession>();
+        public DbSet<Avatar> Avatars => Set<Avatar>();
+        public DbSet<Attach> Attaches => Set<Attach>();
 
     }
 }
