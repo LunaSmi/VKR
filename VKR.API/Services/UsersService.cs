@@ -7,6 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using VKR.API.Configs;
 using VKR.API.Models;
+using VKR.API.Models.Attach;
+using VKR.API.Models.Token;
+using VKR.API.Models.User;
 using VKR.Common;
 using VKR.DAL;
 using VKR.DAL.Entities;
@@ -18,6 +21,12 @@ namespace VKR.API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _context;
         private readonly AuthConfig _authConfig;
+        private Func<UserModel, string?>? _linkGenerator;
+        public void SetLinkGenerator(Func<UserModel, string?> linkGenerator)
+        {
+            _linkGenerator = linkGenerator;
+        }
+
 
         public UsersService(
             DataContext context,
@@ -93,7 +102,7 @@ namespace VKR.API.Services
 
         public async Task<TokenModel> GetTokens(string login, string password)
         {
-            var user = await GeyUserByCredention(login, password);
+            var user = await GetUserByCredention(login, password);
             var session = await _context.Sessions.AddAsync(new VKR.DAL.Entities.UserSession
             {
                 Id= Guid.NewGuid(),
@@ -113,6 +122,13 @@ namespace VKR.API.Services
                 throw new Exception("session is not found");
             }
             return session;
+        }
+
+        public async Task RemoveSession(Guid sessionId)
+        {
+            var session = await GetSessionById(sessionId);
+            _context.Sessions.Remove(session);
+            await _context.SaveChangesAsync();
         }
 
         private async Task<UserSession> GetSessionByRefreshToken(Guid id)
@@ -166,9 +182,6 @@ namespace VKR.API.Services
             }
         }
 
-
-
-
         private TokenModel GenerateTokens(VKR.DAL.Entities.UserSession session)
         {
             var dtNow = DateTime.Now;
@@ -211,7 +224,7 @@ namespace VKR.API.Services
             return user;
         }
 
-        private async Task<VKR.DAL.Entities.User> GeyUserByCredention(string login, string password)
+        private async Task<VKR.DAL.Entities.User> GetUserByCredention(string login, string password)
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == login.ToLower());
             if (user == null)

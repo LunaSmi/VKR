@@ -1,4 +1,4 @@
-﻿namespace VKR.API.Models
+﻿namespace VKR.API.Models.Token
 {
     public class RefreshTokenRequestModel
     {

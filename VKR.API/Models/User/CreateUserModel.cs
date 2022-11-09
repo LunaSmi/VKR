@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace VKR.API.Models
+namespace VKR.API.Models.User
 {
     public class CreateUserModel
     {

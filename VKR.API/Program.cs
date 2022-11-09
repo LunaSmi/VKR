@@ -53,6 +53,11 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 
 builder.Services.AddScoped<UsersService>();
+builder.Services.AddScoped<PostService>();
+builder.Services.AddScoped<PhotoService>();
+builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<AttachService>();
+
 
 builder.Services.AddDbContext<VKR.DAL.DataContext>(options =>
 {
