@@ -8,7 +8,8 @@
         public string PasswordHash { get; set; } = "empty";
         public DateTimeOffset BirthDate { get; set; }
 
-        public Guid? AvatarId { get; set; }
+
+
         public virtual Avatar? Avatar { get; set; }
 
         public virtual ICollection<UserSession>? Sessions { get; set; }

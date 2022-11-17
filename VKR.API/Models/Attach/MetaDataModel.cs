@@ -1,6 +1,6 @@
 ﻿namespace VKR.API.Models.Attach
 {
-    public class MetaDataModel
+    public class MetadataModel
     {
         public Guid TempId { get; set; }
         public string Name { get; set; } = null!;

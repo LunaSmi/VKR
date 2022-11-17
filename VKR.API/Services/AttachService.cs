@@ -1,5 +1,4 @@
-﻿using VKR.API.Models;
-using VKR.API.Models.Attach;
+﻿using VKR.API.Models.Attach;
 
 namespace VKR.API.Services
 {
@@ -7,10 +6,10 @@ namespace VKR.API.Services
     {
 
 
-        public async Task<MetaDataModel> UploadFile(IFormFile file)
+        public async Task<MetadataModel> UploadFile(IFormFile file)
         {
             var tempPath = Path.GetTempPath();
-            var meta = new MetaDataModel
+            var meta = new MetadataModel
             {
                 TempId = Guid.NewGuid(),
                 Name = file.FileName,
@@ -27,16 +26,6 @@ namespace VKR.API.Services
             }
             else
             {
-                if (fileinfo.Directory == null)
-                {
-                    throw new Exception("temp is null");
-                }
-                else
-                if (!fileinfo.Directory.Exists)
-                {
-                    fileinfo.Directory?.Create();
-                }
-
                 using (var stream = System.IO.File.Create(newPath))
                 {
                     await file.CopyToAsync(stream);
@@ -45,8 +34,6 @@ namespace VKR.API.Services
                 return meta;
             }
         }
-
-
 
     }
 }

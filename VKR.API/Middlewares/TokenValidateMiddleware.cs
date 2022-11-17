@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using VKR.API.Services;
+using VKR.Common.Const;
 
 namespace VKR.API.Middlewares
 {
@@ -12,13 +13,13 @@ namespace VKR.API.Middlewares
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, UsersService usersService)
+        public async Task InvokeAsync(HttpContext context, AuthService authService)
         {
             var isOk = true;
-            var sessionIdString = context.User.Claims.FirstOrDefault(x=>x.Type=="sessionId")?.Value;
+            var sessionIdString = context.User.Claims.FirstOrDefault(x=>x.Type==ClaimNames.SessionId)?.Value;
             if(Guid.TryParse(sessionIdString,out var sessionId))
             {
-                var session = await usersService.GetSessionById(sessionId);
+                var session = await authService.GetSessionById(sessionId);
                 if (!session.IsActive)
                 {
                     isOk = false;

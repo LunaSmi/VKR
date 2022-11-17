@@ -12,8 +12,8 @@ using VKR.DAL;
 namespace VKR.API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20221108102847_v3")]
-    partial class v3
+    [Migration("20221113172939_newDB")]
+    partial class newDB
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -30,6 +30,9 @@ namespace VKR.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasColumnType("text");
@@ -42,15 +45,12 @@ namespace VKR.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
-
                     b.Property<long>("Size")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("AuthorId");
 
                     b.ToTable("Attaches");
                 });
@@ -112,9 +112,6 @@ namespace VKR.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AvatarId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -131,8 +128,6 @@ namespace VKR.API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AvatarId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -169,10 +164,16 @@ namespace VKR.API.Migrations
                 {
                     b.HasBaseType("VKR.DAL.Entities.Attach");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.HasIndex("OwnerId")
+                        .IsUnique();
+
                     b.ToTable("Avatars", (string)null);
                 });
 
-            modelBuilder.Entity("VKR.DAL.Entities.Photo", b =>
+            modelBuilder.Entity("VKR.DAL.Entities.PostContent", b =>
                 {
                     b.HasBaseType("VKR.DAL.Entities.Attach");
 
@@ -181,18 +182,18 @@ namespace VKR.API.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Photos", (string)null);
+                    b.ToTable("Contents", (string)null);
                 });
 
             modelBuilder.Entity("VKR.DAL.Entities.Attach", b =>
                 {
-                    b.HasOne("VKR.DAL.Entities.User", "Owner")
+                    b.HasOne("VKR.DAL.Entities.User", "Author")
                         .WithMany()
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("VKR.DAL.Entities.Comment", b =>
@@ -225,15 +226,6 @@ namespace VKR.API.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("VKR.DAL.Entities.User", b =>
-                {
-                    b.HasOne("VKR.DAL.Entities.Avatar", "Avatar")
-                        .WithMany()
-                        .HasForeignKey("AvatarId");
-
-                    b.Navigation("Avatar");
-                });
-
             modelBuilder.Entity("VKR.DAL.Entities.UserSession", b =>
                 {
                     b.HasOne("VKR.DAL.Entities.User", "User")
@@ -252,18 +244,26 @@ namespace VKR.API.Migrations
                         .HasForeignKey("VKR.DAL.Entities.Avatar", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("VKR.DAL.Entities.User", "Owner")
+                        .WithOne("Avatar")
+                        .HasForeignKey("VKR.DAL.Entities.Avatar", "OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("VKR.DAL.Entities.Photo", b =>
+            modelBuilder.Entity("VKR.DAL.Entities.PostContent", b =>
                 {
                     b.HasOne("VKR.DAL.Entities.Attach", null)
                         .WithOne()
-                        .HasForeignKey("VKR.DAL.Entities.Photo", "Id")
+                        .HasForeignKey("VKR.DAL.Entities.PostContent", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VKR.DAL.Entities.Post", "Post")
-                        .WithMany("Photos")
+                        .WithMany("Contents")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -275,11 +275,13 @@ namespace VKR.API.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Photos");
+                    b.Navigation("Contents");
                 });
 
             modelBuilder.Entity("VKR.DAL.Entities.User", b =>
                 {
+                    b.Navigation("Avatar");
+
                     b.Navigation("Posts");
 
                     b.Navigation("Sessions");

@@ -26,8 +26,8 @@ namespace VKR.DAL
                 ToTable(nameof(Avatars));
 
             modelBuilder.
-                Entity<Photo>().
-                ToTable(nameof(Photos));
+                Entity<PostContent>().
+                ToTable(nameof(Contents));
 
         }
 
@@ -41,7 +41,7 @@ namespace VKR.DAL
         public DbSet<Attach> Attaches => Set<Attach>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
-        public DbSet<Photo> Photos => Set<Photo>();
+        public DbSet<PostContent> Contents => Set<PostContent>();
 
     }
 }

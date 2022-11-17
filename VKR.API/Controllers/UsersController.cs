@@ -1,14 +1,10 @@
-﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using VKR.API.Models;
 using VKR.API.Models.Attach;
 using VKR.API.Models.User;
 using VKR.API.Services;
-using VKR.DAL;
+using VKR.Common.Const;
+using VKR.Common.Extensions;
 
 namespace VKR.API.Controllers
 {
@@ -25,69 +21,18 @@ namespace VKR.API.Controllers
             _usersService = usersService;
             if (usersService != null)
                 _usersService.SetLinkGenerator(x =>
-                Url.Action(nameof(GetUserAvatar), new { userId = x.Id, download = false }));
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<FileResult> GetUserAvatar(Guid userId)
-        {
-            var attach = await _usersService.GetUserAvatar(userId);
-            return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.MimeType);
-        }
-
-        [HttpGet]
-        public async Task<FileResult> DownloadAvatar(Guid userId)
-        {
-            var attach = await _usersService.GetUserAvatar(userId);
-
-            HttpContext.Response.ContentType = attach.MimeType;
-            FileContentResult result = new (System.IO.File.ReadAllBytes(attach.FilePath), attach.MimeType)
-            {
-                FileDownloadName = attach.Name
-            };
-
-            return result;
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task AddAvatarToUser(MetaDataModel metaData)
-        {
-            var userIdString = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
-            if (Guid.TryParse(userIdString, out var userId))
-            {
-                var tempFileInfo = new FileInfo(Path.Combine(Path.GetTempPath(),metaData.TempId.ToString()));
-                if (!tempFileInfo.Exists)
+                Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new
                 {
-                    throw new Exception("File is not found");
-                }
-                else
-                {
-                    var path = Path.Combine(Directory.GetCurrentDirectory(),"Files",metaData.TempId.ToString());
-
-                    var destFileInfo = new FileInfo(path);
-                    if (destFileInfo.Directory != null && !destFileInfo.Directory.Exists)
-                        destFileInfo.Directory.Create();
-
-                    System.IO.File.Copy(tempFileInfo.FullName, path, true);
-                    await _usersService.AddAvatarToUser(userId, metaData,path);
-
-                }
-            }
-            else
-            {
-                throw new Exception("You are not authorized");
-            }
-
+                    userId = x.Id,
+                }));
         }
 
+
         [HttpGet]
-        [Authorize]
-        public async Task<UserModel> GetCurrentUser()
+        public async Task<UserAvatarModel> GetCurrentUser()
         {
-            var userIdString = User.Claims.FirstOrDefault(c=>c.Type=="userId")?.Value;
-            if(Guid.TryParse(userIdString, out var userId))
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            if (userId != default)
             {
                 return await _usersService.GetUser(userId);
             }
@@ -97,12 +42,10 @@ namespace VKR.API.Controllers
             }
         }
 
-
         [HttpGet]
-        [Authorize]
-        public async Task<List<UserModel>> GetUsers()
+        public async Task<IEnumerable<UserAvatarModel>> GetUsers()
         {
-           return await _usersService.GetUsers();
+            return await _usersService.GetUsers();
         }
 
     }

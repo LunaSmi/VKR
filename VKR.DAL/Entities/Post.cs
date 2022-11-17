@@ -12,11 +12,10 @@ namespace VKR.DAL.Entities
         public string Description { get; set; } = "empty";
         public DateTimeOffset Created { get; set; }
 
-
+        public Guid OwnerId { get; set; }
         public virtual User Owner { get; set; } = null!;
 
-        //public virtual ICollection<string>? PhotoUrls { get; set; }
-        public virtual ICollection<Photo>? Photos { get; set; }
+        public virtual ICollection<PostContent>? Contents { get; set; }
 
         public virtual ICollection<Comment>? Comments { get; set; }
 

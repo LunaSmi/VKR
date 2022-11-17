@@ -1,16 +1,7 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using VKR.API.Configs;
-using VKR.API.Models;
 using VKR.API.Models.Attach;
-using VKR.API.Models.Token;
 using VKR.API.Models.User;
-using VKR.Common;
 using VKR.DAL;
 using VKR.DAL.Entities;
 
@@ -20,32 +11,42 @@ namespace VKR.API.Services
     {
         private readonly IMapper _mapper;
         private readonly DataContext _context;
-        private readonly AuthConfig _authConfig;
-        private Func<UserModel, string?>? _linkGenerator;
-        public void SetLinkGenerator(Func<UserModel, string?> linkGenerator)
+
+        private Func<User, string?>? _linkGenerator;
+        public void SetLinkGenerator(Func<User, string?> linkGenerator)
         {
             _linkGenerator = linkGenerator;
         }
 
-
-        public UsersService(
-            DataContext context,
-            IMapper mapper,
-            IOptions<AuthConfig> config)
+        public UsersService(DataContext context,
+            IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
-            _authConfig = config.Value;
         }
 
-        public async Task AddAvatarToUser(Guid userId,MetaDataModel meta,string filePath)
+        public async Task<Guid> CreateUser(CreateUserModel createUserModel)
         {
-            var user = await _context.Users.Include(u => u.Avatar).FirstOrDefaultAsync(x=>x.Id==userId);
-            if(user != null)
+            var dbuser = _mapper.Map<VKR.DAL.Entities.User>(createUserModel);
+            var user = await _context.Users.AddAsync(dbuser);
+            await _context.SaveChangesAsync();
+            return user.Entity.Id;
+        }
+
+        public async Task<bool> CheckUserExistAsync(string email)
+        {
+            return await _context.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
+        }
+
+        public async Task AddAvatarToUser(Guid userId, MetadataModel meta, string filePath)
+        {
+            var user = await _context.Users.Include(u => u.Avatar).FirstOrDefaultAsync(x => x.Id == userId);
+            if (user != null)
             {
                 var avatar = new Avatar
                 {
-                    Owner = user,
+                    Author = user,
+                    AuthorId = user.Id,
                     MimeType = meta.MimeType,
                     Name = meta.Name,
                     Size = meta.Size,
@@ -62,181 +63,42 @@ namespace VKR.API.Services
             var attach = _mapper.Map<AttachModel>(user.Avatar);
             return attach;
         }
-
-        public async Task<bool> CheckUserExistAsync(string email)
+        // not used
+        public async Task Delete(Guid userId)
         {
-            return await _context.Users.AnyAsync(x=>x.Email.ToLower() == email.ToLower());
-        }
-
-        public async Task Delete(Guid id)
-        {
-            var dbUser = await GetUserById(id);
-            if(dbUser != null)
+            var dbUser = await GetUserById(userId);
+            if (dbUser != null)
             {
                 _context.Users.Remove(dbUser);
                 await _context.SaveChangesAsync();
             }
         }
 
-        public async Task<Guid> CreateUser(CreateUserModel createUserModel)
+        public async Task<IEnumerable<UserAvatarModel>> GetUsers()
         {
-            var dbuser = _mapper.Map<VKR.DAL.Entities.User>(createUserModel);
-            var user = await _context.Users.AddAsync(dbuser);
-            await _context.SaveChangesAsync();
-            return user.Entity.Id;
+            return (await _context.Users.AsNoTracking().Include(x => x.Avatar).ToListAsync())
+                 .Select(x => _mapper.Map<User, UserAvatarModel>(x, o => o.AfterMap(FixAvatar)));
         }
 
-        public async Task<List<UserModel>> GetUsers()
+        public async Task<UserAvatarModel> GetUser(Guid userId)
         {
-            return await _context.Users.AsNoTracking().ProjectTo<UserModel>(_mapper.ConfigurationProvider).ToListAsync();
-        }
-
-        public async Task<UserModel> GetUser(Guid id)
-        {
-            var user = await GetUserById(id);
-            return _mapper.Map<UserModel>(user);
+            return _mapper.Map<User, UserAvatarModel>(await GetUserById(userId), o => o.AfterMap(FixAvatar));
         }
 
 
-
-
-        public async Task<TokenModel> GetTokens(string login, string password)
+        private async Task<VKR.DAL.Entities.User> GetUserById(Guid userId)
         {
-            var user = await GetUserByCredention(login, password);
-            var session = await _context.Sessions.AddAsync(new VKR.DAL.Entities.UserSession
-            {
-                Id= Guid.NewGuid(),
-                UserId = user.Id,
-                Created = DateTime.UtcNow,
-                RefreshToken = Guid.NewGuid()
-            });
-            await _context.SaveChangesAsync();
-            return GenerateTokens(session.Entity);
-        }
-
-        public async Task<UserSession> GetSessionById(Guid id)
-        {
-            var session = await _context.Sessions.FirstOrDefaultAsync(s=> s.Id == id);
-            if (session == null)
-            {
-                throw new Exception("session is not found");
-            }
-            return session;
-        }
-
-        public async Task RemoveSession(Guid sessionId)
-        {
-            var session = await GetSessionById(sessionId);
-            _context.Sessions.Remove(session);
-            await _context.SaveChangesAsync();
-        }
-
-        private async Task<UserSession> GetSessionByRefreshToken(Guid id)
-        {
-            var session = await _context.Sessions.Include(x=>x.User).FirstOrDefaultAsync(s => s.RefreshToken == id);
-            if (session == null)
-            {
-                throw new Exception("session is not found");
-            }
-            return session;
-        }
-
-        public async Task<TokenModel> GetTokensByRefreshToken(string refreshToken)
-        {
-            var validParams = new TokenValidationParameters
-            {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateIssuerSigningKey = true,
-                ValidateLifetime = true,
-                IssuerSigningKey = _authConfig.SimmetricSecurityKey()
-            };
-
-           var principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, validParams, out var securityToken);
-
-            if(securityToken is not JwtSecurityToken jwtToken 
-                || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token");
-            }
-
-            if(principal.Claims.FirstOrDefault(c=>c.Type == "refreshToken")?.Value is String refreshIdString
-                && Guid.TryParse(refreshIdString,out var refreshId) )
-            {
-                var session = await GetSessionByRefreshToken(refreshId);
-                if (!session.IsActive)
-                {
-                    throw new Exception("session is not active");
-                }
-
-                var user = session.User;
-
-                session.RefreshToken = Guid.NewGuid();
-                await _context.SaveChangesAsync();
-
-                return GenerateTokens(session);
-            }
-            else
-            {
-                throw new SecurityTokenException("Invalid token");
-            }
-        }
-
-        private TokenModel GenerateTokens(VKR.DAL.Entities.UserSession session)
-        {
-            var dtNow = DateTime.Now;
-
-            var jwt = new JwtSecurityToken(
-                issuer: _authConfig.Issuer,
-                audience: _authConfig.Audience,
-                notBefore: dtNow,
-                claims: new Claim[]
-                {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType,session.User.Name),
-                    new Claim("sessionId",session.Id.ToString()),
-                    new Claim("userId",session.User.Id.ToString()),
-                },
-                expires: DateTime.Now.AddMinutes(_authConfig.LifeTime),
-                signingCredentials: new SigningCredentials(_authConfig.SimmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-            var refresh = new JwtSecurityToken(
-                notBefore: dtNow,
-                claims: new Claim[]
-                {
-                    new Claim("refreshToken",session.RefreshToken.ToString()),
-                },
-                expires: DateTime.Now.AddHours(_authConfig.LifeTime),
-                signingCredentials: new SigningCredentials(_authConfig.SimmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-            var encodedRefresh = new JwtSecurityTokenHandler().WriteToken(refresh);
-
-            return new TokenModel(encodedJwt, encodedRefresh);
-
-        }
-
-        private async Task<VKR.DAL.Entities.User> GetUserById(Guid id)
-        {
-            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                throw new ArgumentNullException(nameof(user),"User Not Found");
+                throw new ArgumentNullException(nameof(user), "User Not Found");
             }
             return user;
         }
 
-        private async Task<VKR.DAL.Entities.User> GetUserByCredention(string login, string password)
+        private void FixAvatar(User user, UserAvatarModel userAvatarModel)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == login.ToLower());
-            if (user == null)
-            {
-                throw new ArgumentNullException(nameof(user),"User Not Found");
-            }
-            if (!HashHelper.Verify(password, user.PasswordHash))
-            {
-                throw new ArgumentException("Password Is Incorrect");
-            }
-            return user;
-
+            userAvatarModel.AvatarLink = user.Avatar == null ? null : _linkGenerator?.Invoke(user);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using VKR.API.Models.Attach;
 using VKR.API.Models.Post;
+using VKR.API.Models.User;
 using VKR.Common;
 
 namespace VKR.API
@@ -9,27 +10,49 @@ namespace VKR.API
     {
         public MapperProfile()
         {
-            CreateMap<Models.User.CreateUserModel, VKR.DAL.Entities.User>()
+            CreateMap<CreateUserModel, VKR.DAL.Entities.User>()
                 .ForMember(d => d.Id, m => m.MapFrom(s => Guid.NewGuid()))
                 .ForMember(d=>d.PasswordHash,m=>m.MapFrom(s=>HashHelper.GetHash(s.Password)))
                 .ForMember(d=>d.BirthDate,m=>m.MapFrom(s=>s.BirthDate.UtcDateTime));
 
-            CreateMap<VKR.DAL.Entities.User, Models.User.UserModel>();
+            CreateMap<VKR.DAL.Entities.User, UserModel>();
 
-            CreateMap<VKR.DAL.Entities.Avatar, Models.Attach.AttachModel>();
+            CreateMap<DAL.Entities.User, UserAvatarModel>();
 
-            CreateMap<VKR.DAL.Entities.Photo, Models.Attach.AttachModel>();
+            CreateMap<VKR.DAL.Entities.Avatar, AttachModel>();
 
-            CreateMap<Models.Post.CreatePostModel, VKR.DAL.Entities.Post>()
+            CreateMap<VKR.DAL.Entities.PostContent, AttachModel>();
+
+            CreateMap<DAL.Entities.PostContent, AttachModelWithLink>();
+
+            CreateMap<MetadataLinkModel, DAL.Entities.PostContent>();
+
+            CreateMap<MetadataModel, MetadataLinkModel>();
+
+
+
+
+
+            CreateMap<CreatePostRequest, CreatePostModel>()
                 .ForMember(d => d.Id, m => m.MapFrom(s => Guid.NewGuid()));
 
-            CreateMap<Models.Attach.MetaDataModel, DAL.Entities.Photo>();
-
-            CreateMap<Models.Attach.MetadataWithPath, DAL.Entities.Photo>();
 
             CreateMap<CreatePostModel, DAL.Entities.Post>()
-                .ForMember(d => d.Photos, m => m.MapFrom(s => s.Contents))
+                .ForMember(d=>d.OwnerId,m=>m.MapFrom(s=>s.AuthorId))
+                .ForMember(d => d.Contents, m => m.MapFrom(s => s.Contents))
                 .ForMember(d => d.Created, m => m.MapFrom(s => DateTime.UtcNow));
+
+
+            //-------------------
+
+            //CreateMap<Models.Attach.MetadataModel, DAL.Entities.PostContent>();
+
+
+
+
+
+
+
         }
     }
 }

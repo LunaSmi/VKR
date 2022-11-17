@@ -52,9 +52,9 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsersService>();
-builder.Services.AddScoped<PostService>();
-builder.Services.AddScoped<PhotoService>();
+builder.Services.AddScoped<PostsService>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<AttachService>();
 

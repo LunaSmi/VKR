@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace VKR.DAL.Entities
 {
-    public class Photo : Attach
+    public class PostContent : Attach
     {
+        public Guid PostId { get; set; }
         public virtual Post Post { get; set; } = null!;
 
     }
