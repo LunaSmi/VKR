@@ -4,6 +4,7 @@ using VKR.API.Models.Post;
 using VKR.API.Services;
 using VKR.Common.Const;
 using VKR.Common.Extensions;
+using VKR.DAL.Entities;
 
 namespace VKR.API.Controllers
 {
@@ -16,26 +17,20 @@ namespace VKR.API.Controllers
         private readonly PostsService _postsService;
         private readonly UsersService _usersService;
 
-        private string? _linkAvatarGenerator(Guid userId)
-        {
-            return Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new
-            {
-                userId,
-            });
-        }
-        private string? _linkContentGenerator(Guid postContentId)
-        {
-            return Url.ControllerAction<AttachController>(nameof(AttachController.GetPostContent), new
-            {
-                postContentId,
-            });
-        }
-
-        public PostsController(PostsService postService, UsersService usersService)
+        public PostsController(PostsService postService, 
+            UsersService usersService,
+            LinkGeneratorService links)
         {
             _usersService = usersService;
             _postsService = postService;
-            _postsService.SetLinkGenerator(_linkContentGenerator, _linkAvatarGenerator);
+            links.LinkContentGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostContent), new
+            {
+                postContentId =x.Id,
+            });
+            links.LinkAvatarGenerator = x=> Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new
+            {
+                userId =x.Id,
+            });
         }
 
         [HttpPost]

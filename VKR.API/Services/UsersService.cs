@@ -12,12 +12,6 @@ namespace VKR.API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _context;
 
-        private Func<User, string?>? _linkGenerator;
-        public void SetLinkGenerator(Func<User, string?> linkGenerator)
-        {
-            _linkGenerator = linkGenerator;
-        }
-
         public UsersService(DataContext context,
             IMapper mapper)
         {
@@ -76,19 +70,22 @@ namespace VKR.API.Services
 
         public async Task<IEnumerable<UserAvatarModel>> GetUsers()
         {
-            return (await _context.Users.AsNoTracking().Include(x => x.Avatar).ToListAsync())
-                 .Select(x => _mapper.Map<User, UserAvatarModel>(x, o => o.AfterMap(FixAvatar)));
+            return await _context.Users.AsNoTracking()
+                .Include(x => x.Avatar)
+                .Include(x => x.Posts)
+                .Select(x => _mapper.Map<UserAvatarModel>(x))
+                .ToListAsync();
         }
 
         public async Task<UserAvatarModel> GetUser(Guid userId)
         {
-            return _mapper.Map<User, UserAvatarModel>(await GetUserById(userId), o => o.AfterMap(FixAvatar));
+            return _mapper.Map<User, UserAvatarModel>(await GetUserById(userId));
         }
 
 
         private async Task<VKR.DAL.Entities.User> GetUserById(Guid userId)
         {
-            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users.Include(x => x.Avatar).Include(x => x.Posts).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 throw new ArgumentNullException(nameof(user), "User Not Found");
@@ -96,9 +93,5 @@ namespace VKR.API.Services
             return user;
         }
 
-        private void FixAvatar(User user, UserAvatarModel userAvatarModel)
-        {
-            userAvatarModel.AvatarLink = user.Avatar == null ? null : _linkGenerator?.Invoke(user);
-        }
     }
 }

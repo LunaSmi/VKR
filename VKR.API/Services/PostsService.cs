@@ -14,14 +14,6 @@ namespace VKR.API.Services
     {
         private readonly IMapper _mapper;
         private readonly DataContext _context;
-        private Func<Guid, string?>? _linkContentGenerator;
-        private Func<Guid, string?>? _linkAvatarGenerator;
-        public void SetLinkGenerator(Func<Guid, string?> linkContentGenerator,
-                                     Func<Guid, string?> linkAvatarGenerator)
-        {
-            _linkAvatarGenerator = linkAvatarGenerator;
-            _linkContentGenerator = linkContentGenerator;
-        }
         public PostsService(IMapper mapper, IOptions<AuthConfig> config, DataContext context)
         {
             _mapper = mapper;
@@ -61,19 +53,11 @@ namespace VKR.API.Services
         {
             var posts = await _context.Posts
                 .Include(x => x.Owner).ThenInclude(x => x.Avatar)
-                .Include(x => x.Contents).AsNoTracking().OrderByDescending(x => x.Created).Skip(skip).Take(take).ToListAsync();
+                .Include(x => x.Contents).AsNoTracking().OrderByDescending(x => x.Created).Skip(skip).Take(take)
+                .Select(x=>_mapper.Map<PostModel>(x))
+                .ToListAsync();
 
-            var result = posts.Select(post =>
-                new PostModel
-                {
-                    Author = _mapper.Map<User, UserAvatarModel>(post.Owner, o => o.AfterMap(FixAvatar)),
-                    Description = post.Description,
-                    Id = post.Id,
-                    Contents = post.Contents?.Select(x =>
-                    _mapper.Map<PostContent, AttachModelWithLink>(x, o => o.AfterMap(FixContent))).ToList()
-                }).ToList();
-
-            return result;
+            return posts;
         }
 
         public async Task<AttachModel> GetPostContent(Guid postContentId)
@@ -85,14 +69,6 @@ namespace VKR.API.Services
 
 
 
-        private void FixAvatar(User s, UserAvatarModel d)
-        {
-            d.AvatarLink = s.Avatar == null ? null : _linkAvatarGenerator?.Invoke(s.Id);
-        }
-        private void FixContent(PostContent s, AttachModelWithLink d)
-        {
-            d.ContentLink = _linkContentGenerator?.Invoke(s.Id);
-        }
 
 
 

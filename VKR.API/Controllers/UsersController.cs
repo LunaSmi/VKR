@@ -16,16 +16,16 @@ namespace VKR.API.Controllers
     {
         private readonly UsersService _usersService;
 
-        public UsersController(
-            UsersService usersService)
+        public UsersController(UsersService usersService,
+            LinkGeneratorService links)
         {
             _usersService = usersService;
-            if (usersService != null)
-                _usersService.SetLinkGenerator(x =>
+
+            links.LinkAvatarGenerator=x=> 
                 Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new
                 {
                     userId = x.Id,
-                }));
+                });
         }
 
 

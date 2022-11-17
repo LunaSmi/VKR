@@ -7,6 +7,7 @@ using VKR.API.Configs;
 using VKR.API.Services;
 using Microsoft.OpenApi.Models;
 using VKR.API.Extensions;
+using VKR.API.Mapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,9 +59,9 @@ builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<PostsService>();
-builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<AttachService>();
-
+builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<LinkGeneratorService>();
 
 builder.Services.AddDbContext<VKR.DAL.DataContext>(options =>
 {
