@@ -8,6 +8,7 @@ namespace VKR.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName ="Auth")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -38,11 +39,13 @@ namespace VKR.API.Controllers
 
         [HttpPost]
         [Authorize]
+        [ApiExplorerSettings(GroupName = "API")]
         public async Task<TokenModel> RefreshToken(RefreshTokenRequestModel model)
             => await _authService.GetTokensByRefreshToken(model.RefreshToken);
 
         [HttpPost]
         [Authorize]
+        [ApiExplorerSettings(GroupName = "API")]
         public async Task<IActionResult> Logout()
         {
             var sessionIdString = User.Claims.FirstOrDefault(c => c.Type == "sessionId")?.Value;

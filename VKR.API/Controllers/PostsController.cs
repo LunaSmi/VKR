@@ -9,6 +9,7 @@ namespace VKR.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "API")]
     [Authorize]
     public class PostsController : ControllerBase
     {

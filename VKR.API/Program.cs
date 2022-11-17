@@ -48,6 +48,9 @@ builder.Services.AddSwaggerGen(c =>
                     new List<string>()
                 }
             });
+
+    c.SwaggerDoc("Auth", new OpenApiInfo { Title = "Auth" });
+    c.SwaggerDoc("API", new OpenApiInfo { Title = "API" });
 });
 
 builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
@@ -111,7 +114,11 @@ using(var serviceScope = ((IApplicationBuilder)app).ApplicationServices.GetServi
 //if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("API/swagger.json", "API");
+        c.SwaggerEndpoint("Auth/swagger.json", "Auth");
+    });
 }
 
 app.UseHttpsRedirection();
