@@ -5,6 +5,7 @@ using VKR.API.Services;
 using VKR.Common.Const;
 using VKR.Common.Extensions;
 
+
 namespace VKR.API.Controllers
 {
     [Route("api/[controller]/[action]")]
@@ -41,28 +42,21 @@ namespace VKR.API.Controllers
         public async Task AddAvatarToUser(MetadataModel metaData)
         {
             var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
-            if (userId != default)
+            var tempFileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), metaData.TempId.ToString()));
+            if (!tempFileInfo.Exists)
             {
-                var tempFileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), metaData.TempId.ToString()));
-                if (!tempFileInfo.Exists)
-                {
-                    throw new Exception("File is not found");
-                }
-                else
-                {
-                    var path = Path.Combine(Directory.GetCurrentDirectory(), "Files", metaData.TempId.ToString());
-
-                    var destFileInfo = new FileInfo(path);
-                    if (destFileInfo.Directory != null && !destFileInfo.Directory.Exists)
-                        destFileInfo.Directory.Create();
-
-                    System.IO.File.Copy(tempFileInfo.FullName, path, true);
-                    await _usersService.AddAvatarToUser(userId, metaData, path);
-                }
+                throw new Exception("File is not found");
             }
             else
             {
-                throw new Exception("You are not authorized");
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "Files", metaData.TempId.ToString());
+
+                var destFileInfo = new FileInfo(path);
+                if (destFileInfo.Directory != null && !destFileInfo.Directory.Exists)
+                    destFileInfo.Directory.Create();
+
+                System.IO.File.Copy(tempFileInfo.FullName, path, true);
+                await _usersService.AddAvatarToUser(userId, metaData, path);
             }
 
         }
@@ -70,15 +64,11 @@ namespace VKR.API.Controllers
         [HttpGet]
         //[AllowAnonymous]
         public async Task<FileStreamResult> GetUserAvatar(Guid userId, bool download = false)
-        {
-            return RenderAttach(await _usersService.GetUserAvatar(userId), download);
-        }
+            => RenderAttach(await _usersService.GetUserAvatar(userId), download);
 
         [HttpGet]
         public async Task<FileStreamResult> GetCurentUserAvatar(bool download = false)
-        {
-            return await GetUserAvatar(User.GetClaimValue<Guid>(ClaimNames.UserId), download);
-        }
+            => await GetUserAvatar(User.GetClaimValue<Guid>(ClaimNames.UserId), download);
 
         [HttpGet]
         [Route("{postContentId}")]

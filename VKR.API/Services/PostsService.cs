@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using VKR.API.Configs;
+using VKR.API.Exceptions;
 using VKR.API.Models.Attach;
 using VKR.API.Models.Post;
 using VKR.API.Models.User;
@@ -58,6 +59,22 @@ namespace VKR.API.Services
                 .ToListAsync();
 
             return posts;
+        }
+
+        public async Task<PostModel> GetPostById(Guid id)
+        {
+            var post = await _context.Posts
+                  .Include(x => x.Owner).ThenInclude(x => x.Avatar)
+                  .Include(x => x.Contents).AsNoTracking()
+                  .Where(x => x.Id == id)
+                  .Select(x => _mapper.Map<PostModel>(x))
+                  .FirstOrDefaultAsync();
+            if (post == null)
+            {
+                throw new NotFoundException("Post");
+            }
+
+            return post;
         }
 
         public async Task<AttachModel> GetPostContent(Guid postContentId)

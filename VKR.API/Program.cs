@@ -122,10 +122,12 @@ using(var serviceScope = ((IApplicationBuilder)app).ApplicationServices.GetServi
     });
 }
 
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseTokenValidation();
+app.UseExceptionMiddleware();
 app.MapControllers();
 
 app.Run();

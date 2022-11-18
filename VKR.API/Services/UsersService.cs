@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using VKR.API.Exceptions;
 using VKR.API.Models.Attach;
 using VKR.API.Models.User;
 using VKR.DAL;
@@ -88,7 +89,7 @@ namespace VKR.API.Services
             var user = await _context.Users.Include(x => x.Avatar).Include(x => x.Posts).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                throw new ArgumentNullException(nameof(user), "User Not Found");
+                throw new NotFoundException("user");
             }
             return user;
         }

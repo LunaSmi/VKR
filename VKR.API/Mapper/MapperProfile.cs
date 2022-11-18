@@ -35,27 +35,13 @@ namespace VKR.API.Mapper
 
             CreateMap<MetadataModel, MetadataLinkModel>();
 
-
-
-
-
             CreateMap<CreatePostRequest, CreatePostModel>()
                 .ForMember(d => d.Id, m => m.MapFrom(s => Guid.NewGuid()));
-
 
             CreateMap<CreatePostModel, DAL.Entities.Post>()
                 .ForMember(d=>d.OwnerId,m=>m.MapFrom(s=>s.AuthorId))
                 .ForMember(d => d.Contents, m => m.MapFrom(s => s.Contents))
                 .ForMember(d => d.Created, m => m.MapFrom(s => DateTime.UtcNow));
-
-
-            //-------------------
-
-            //CreateMap<Models.Attach.MetadataModel, DAL.Entities.PostContent>();
-
-
-
-
 
 
 

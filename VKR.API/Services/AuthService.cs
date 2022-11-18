@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using VKR.API.Configs;
+using VKR.API.Exceptions;
 using VKR.API.Models.Token;
 using VKR.Common;
 using VKR.Common.Const;
@@ -15,17 +16,14 @@ namespace VKR.API.Services
 {
     public class AuthService
     {
-        private readonly IMapper _mapper;
         private readonly DataContext _context;
         private readonly AuthConfig _authConfig;
 
         public AuthService(
             DataContext context,
-            IMapper mapper,
             IOptions<AuthConfig> config)
         {
             _context = context;
-            _mapper = mapper;
             _authConfig = config.Value;
         }
 
@@ -150,7 +148,7 @@ namespace VKR.API.Services
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == login.ToLower());
             if (user == null)
             {
-                throw new ArgumentNullException(nameof(user), "User Not Found");
+                throw new NotFoundException(login);
             }
             if (!HashHelper.Verify(password, user.PasswordHash))
             {

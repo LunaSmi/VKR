@@ -1,4 +1,6 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
 using VKR.API.Services;
 using VKR.Common.Const;
 
@@ -20,11 +22,12 @@ namespace VKR.API.Middlewares
             if(Guid.TryParse(sessionIdString,out var sessionId))
             {
                 var session = await authService.GetSessionById(sessionId);
-                if (!session.IsActive)
+                if (!session.IsActive || session==null)
                 {
                     isOk = false;
                     context.Response.Clear();
                     context.Response.StatusCode = 401;
+
                 }
 
             }

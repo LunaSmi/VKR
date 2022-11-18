@@ -18,7 +18,5 @@ namespace VKR.API.Services
             d.ContentLink = LinkContentGenerator?.Invoke(s);
         }
 
-
-
     }
 }

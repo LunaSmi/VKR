@@ -33,21 +33,12 @@ namespace VKR.API.Controllers
         public async Task<UserAvatarModel> GetCurrentUser()
         {
             var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
-            if (userId != default)
-            {
-                return await _usersService.GetUser(userId);
-            }
-            else
-            {
-                throw new Exception("You are not authorized");
-            }
+            return await _usersService.GetUser(userId);
         }
 
         [HttpGet]
         public async Task<IEnumerable<UserAvatarModel>> GetUsers()
-        {
-            return await _usersService.GetUsers();
-        }
+            => await _usersService.GetUsers();
 
     }
 }
