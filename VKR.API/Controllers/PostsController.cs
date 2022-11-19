@@ -43,12 +43,18 @@ namespace VKR.API.Controllers
 
 
         [HttpGet]
-        public async Task<List<PostModel>> GetPosts(int skip = 0, int take = 10)
-            => await _postsService.GetPosts(skip, take);
+        public async Task<List<PostModel>> GetPostsForCurrentUser(int skip = 0, int take = 10)
+        {
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            return await _postsService.GetPosts(userId,skip, take);
+        }
 
         [HttpGet]
-        public async Task<PostModel> GetPostById(Guid id)
-            => await _postsService.GetPostById(id);
+        public async Task<PostModel> GetPostByIdForCurrentUser(Guid postId)
+        {
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            return await _postsService.GetPostById(postId,userId);
+        }
 
 
 

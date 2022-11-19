@@ -8,6 +8,9 @@ namespace VKR.API.Models.Post
         public Guid Id { get; set; }
         public string? Description { get; set; }
         public UserAvatarModel Author { get; set; } = null!;
-        public List<AttachModelWithLink>? Contents { get; set; } = new List<AttachModelWithLink>(); 
+        public List<AttachModelWithLink>? Contents { get; set; } = new List<AttachModelWithLink>();
+        
+        public long LikesCount { get; set; }
+        public bool IsLikedByCurrentUser { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using VKR.API.Configs;
@@ -15,7 +16,7 @@ namespace VKR.API.Services
     {
         private readonly IMapper _mapper;
         private readonly DataContext _context;
-        public PostsService(IMapper mapper, IOptions<AuthConfig> config, DataContext context)
+        public PostsService(IMapper mapper, DataContext context)
         {
             _mapper = mapper;
             _context = context;
@@ -50,30 +51,37 @@ namespace VKR.API.Services
 
         }
 
-        public async Task<List<PostModel>> GetPosts(int skip, int take)
+        public async Task<List<PostModel>> GetPosts(Guid userId, int skip, int take)
         {
             var posts = await _context.Posts
                 .Include(x => x.Owner).ThenInclude(x => x.Avatar)
                 .Include(x => x.Contents).AsNoTracking().OrderByDescending(x => x.Created).Skip(skip).Take(take)
+                .Include(x => x.PostLikes).AsNoTracking()
                 .Select(x=>_mapper.Map<PostModel>(x))
                 .ToListAsync();
+
+            foreach (var post in posts)
+            {
+                post.IsLikedByCurrentUser = IsLiked(post.Id, userId);
+            }
 
             return posts;
         }
 
-        public async Task<PostModel> GetPostById(Guid id)
+        public async Task<PostModel> GetPostById(Guid postId,Guid userId)
         {
             var post = await _context.Posts
                   .Include(x => x.Owner).ThenInclude(x => x.Avatar)
                   .Include(x => x.Contents).AsNoTracking()
-                  .Where(x => x.Id == id)
+                  .Include(x=>x.PostLikes).AsNoTracking()
+                  .Where(x => x.Id == postId)
                   .Select(x => _mapper.Map<PostModel>(x))
                   .FirstOrDefaultAsync();
             if (post == null)
             {
                 throw new NotFoundException("Post");
             }
-
+            post.IsLikedByCurrentUser = IsLiked(postId,userId);
             return post;
         }
 
@@ -83,8 +91,47 @@ namespace VKR.API.Services
             return _mapper.Map<AttachModel>(res);
         }
 
+        public async Task AddLikeToPostAsync(Guid postId, Guid userId)
+        {
+            if (IsLiked(postId, userId))
+            {
+                return;
+            }
+
+            var like = new PostLike
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                PostId = postId,
+            };
+            await _context.PostLikes.AddAsync(like);
+            await _context.SaveChangesAsync();
+
+        }
+
+        public async Task RemoveLikeFromPostAsync(Guid postId, Guid userId)
+        {
+            var like = await _context.PostLikes
+                .Where(x => x.PostId == postId && x.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (like == null)
+            {
+                return;
+            }
+
+            _context.PostLikes.Remove(like);
+            await _context.SaveChangesAsync();
+        }
 
 
+
+
+        private bool IsLiked(Guid postId, Guid userId)
+        {
+            return _context.PostLikes.Where(x => x.PostId == postId)
+                .Any(x => x.UserId == userId);
+        }
 
 
 

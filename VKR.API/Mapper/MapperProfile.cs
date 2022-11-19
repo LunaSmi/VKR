@@ -25,11 +25,14 @@ namespace VKR.API.Mapper
             CreateMap<VKR.DAL.Entities.Avatar, AttachModel>();
 
             CreateMap<VKR.DAL.Entities.Post, PostModel>()
-                .ForMember(d => d.Author, m => m.MapFrom(d => d.Owner));
+                .ForMember(d => d.Author, m => m.MapFrom(d => d.Owner))
+                .ForMember(d => d.LikesCount, m => m.MapFrom(s => s.PostLikes!.Count))
+                ;
 
             CreateMap<VKR.DAL.Entities.PostContent, AttachModel>();
 
-            CreateMap<DAL.Entities.PostContent, AttachModelWithLink>().AfterMap<PostContentMapperAction>();
+            CreateMap<DAL.Entities.PostContent, AttachModelWithLink>()
+                .AfterMap<PostContentMapperAction>();
 
             CreateMap<MetadataLinkModel, DAL.Entities.PostContent>();
 
