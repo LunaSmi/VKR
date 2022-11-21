@@ -17,11 +17,11 @@ namespace VKR.DAL.Entities
 
         public virtual ICollection<PostContent>? Contents { get; set; }
 
-        public virtual ICollection<Comment>? Comments { get; set; }
-
         public virtual ICollection<PostLike>? PostLikes { get; set; }
 
-        //public virtual ICollection<User>? UsersLiked { get; set; }
+        public virtual ICollection<Comment>? Comments { get; set; }
+
+
 
     }
 }

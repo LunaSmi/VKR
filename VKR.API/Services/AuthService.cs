@@ -101,6 +101,7 @@ namespace VKR.API.Services
 
 
 
+
         private async Task<UserSession> GetSessionByRefreshToken(Guid reshreshTokenId)
         {
             var session = await _context.Sessions.Include(x => x.User).FirstOrDefaultAsync(s => s.RefreshToken == reshreshTokenId);

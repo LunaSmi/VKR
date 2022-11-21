@@ -12,5 +12,8 @@ namespace VKR.API.Models.Post
         
         public long LikesCount { get; set; }
         public bool IsLikedByCurrentUser { get; set; }
+
+        public long CommentsCount { get; set; }
+        public List<CommentModel> Comments { get; set; } = new List<CommentModel>();
     }
 }

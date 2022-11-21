@@ -28,7 +28,7 @@ namespace VKR.API.Services
             return user.Entity.Id;
         }
 
-        public async Task<bool> CheckUserExistAsync(string email)
+        public async Task<bool> CheckUserExist(string email)
         {
             return await _context.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
         }

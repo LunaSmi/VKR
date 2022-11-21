@@ -28,7 +28,7 @@ namespace VKR.API.Controllers
         [HttpPost]
         public async Task Register(CreateUserModel createUserModel)
         {
-            if (await _usersService.CheckUserExistAsync(createUserModel.Email))
+            if (await _usersService.CheckUserExist(createUserModel.Email))
             {
                 throw new Exception("user with this email already exists");
             }

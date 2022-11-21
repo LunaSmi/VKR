@@ -60,7 +60,6 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<PostsService>();
 builder.Services.AddScoped<AttachService>();
-builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<LinkGeneratorService>();
 
 builder.Services.AddDbContext<VKR.DAL.DataContext>(options =>

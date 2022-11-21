@@ -25,14 +25,14 @@ namespace VKR.API.Controllers
         public async Task AddLikeToPost(Guid postId)
         {
             var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
-            await _postsService.AddLikeToPostAsync(postId, userId);
+            await _postsService.AddLikeToPost(postId, userId);
         }
 
         [HttpPost]
         public async Task RemoveLikeFromPost(Guid postId)
         {
             var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
-            await _postsService.RemoveLikeFromPostAsync(postId, userId);
+            await _postsService.RemoveLikeFromPost(postId, userId);
         }
 
 

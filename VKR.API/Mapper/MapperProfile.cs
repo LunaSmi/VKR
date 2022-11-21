@@ -4,6 +4,7 @@ using VKR.API.Models.Attach;
 using VKR.API.Models.Post;
 using VKR.API.Models.User;
 using VKR.Common;
+using VKR.DAL.Entities;
 
 namespace VKR.API.Mapper
 {
@@ -27,6 +28,7 @@ namespace VKR.API.Mapper
             CreateMap<VKR.DAL.Entities.Post, PostModel>()
                 .ForMember(d => d.Author, m => m.MapFrom(d => d.Owner))
                 .ForMember(d => d.LikesCount, m => m.MapFrom(s => s.PostLikes!.Count))
+                .ForMember(d => d.CommentsCount, m => m.MapFrom(s => s.Comments!.Count))
                 ;
 
             CreateMap<VKR.DAL.Entities.PostContent, AttachModel>();
@@ -46,8 +48,44 @@ namespace VKR.API.Mapper
                 .ForMember(d => d.Contents, m => m.MapFrom(s => s.Contents))
                 .ForMember(d => d.Created, m => m.MapFrom(s => DateTime.UtcNow));
 
+            CreateMap<CreateCommentRequest, VKR.DAL.Entities.Comment>()
+                .ForMember(d => d.Id, m => m.MapFrom(s => Guid.NewGuid()))
+                .ForMember(d => d.PublicationDate, m => m.MapFrom(s => DateTime.UtcNow));
+
+
+            CreateMap<DAL.Entities.User, UserAvatarForCommentModel>()
+                .ForMember(d=>d.AuthorId,m => m.MapFrom(s => s.Id))
+                .ForMember(d => d.AuthorName, m => m.MapFrom(s => s.Name))
+                .AfterMap<UserAvatarForCommentMapperAction>();
+
+
+            CreateMap<VKR.DAL.Entities.Comment, CommentModel>()
+            .ForMember(d => d.Author, m => m.MapFrom(d => d.Author));
 
 
         }
+
+
+
+
     }
+
+    //public class CommentConverter : IValueConverter<ICollection<Comment>, List<CommentModel>>
+    //{
+
+    //    public List<CommentModel> Convert(ICollection<Comment> sourceMember, ResolutionContext context)
+    //    {
+    //        var result = new List<CommentModel>();
+            
+    //        foreach (var item in sourceMember)
+    //        {
+    //            var commentModel = new CommentModel();
+    //            commentModel = context.Mapper.Map<Comment, CommentModel>(item);
+    //            commentModel.Author = context.Mapper.Map<UserAvatarForCommentModel>(item.Author);  
+
+    //           result.Add(commentModel);
+    //        }
+    //        return result;
+    //    }
+    //}
 }

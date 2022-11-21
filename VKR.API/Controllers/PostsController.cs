@@ -30,6 +30,11 @@ namespace VKR.API.Controllers
             {
                 userId =x.Id,
             });
+            links.LinkAvatarForCommentGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new
+            {
+                userId = x.Id,
+            });
+
         }
 
         [HttpPost]
@@ -40,7 +45,6 @@ namespace VKR.API.Controllers
             request.AuthorId = userId;
             await _postsService.CreatePost(request);
         }
-
 
         [HttpGet]
         public async Task<List<PostModel>> GetPostsForCurrentUser(int skip = 0, int take = 10)
@@ -55,7 +59,6 @@ namespace VKR.API.Controllers
             var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
             return await _postsService.GetPostById(postId,userId);
         }
-
 
 
     }

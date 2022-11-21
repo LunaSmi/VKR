@@ -55,6 +55,7 @@ namespace VKR.API.Services
         {
             var posts = await _context.Posts
                 .Include(x => x.Owner).ThenInclude(x => x.Avatar)
+                .Include(x => x.Comments)
                 .Include(x => x.Contents).AsNoTracking().OrderByDescending(x => x.Created).Skip(skip).Take(take)
                 .Include(x => x.PostLikes).AsNoTracking()
                 .Select(x=>_mapper.Map<PostModel>(x))
@@ -74,6 +75,7 @@ namespace VKR.API.Services
                   .Include(x => x.Owner).ThenInclude(x => x.Avatar)
                   .Include(x => x.Contents).AsNoTracking()
                   .Include(x=>x.PostLikes).AsNoTracking()
+                  .Include(x => x.Comments)
                   .Where(x => x.Id == postId)
                   .Select(x => _mapper.Map<PostModel>(x))
                   .FirstOrDefaultAsync();
@@ -82,6 +84,8 @@ namespace VKR.API.Services
                 throw new NotFoundException("Post");
             }
             post.IsLikedByCurrentUser = IsLiked(postId,userId);
+            post.Comments = await GetAllCommentsByPostId(postId);
+
             return post;
         }
 
@@ -91,7 +95,7 @@ namespace VKR.API.Services
             return _mapper.Map<AttachModel>(res);
         }
 
-        public async Task AddLikeToPostAsync(Guid postId, Guid userId)
+        public async Task AddLikeToPost(Guid postId, Guid userId)
         {
             if (IsLiked(postId, userId))
             {
@@ -109,7 +113,7 @@ namespace VKR.API.Services
 
         }
 
-        public async Task RemoveLikeFromPostAsync(Guid postId, Guid userId)
+        public async Task RemoveLikeFromPost(Guid postId, Guid userId)
         {
             var like = await _context.PostLikes
                 .Where(x => x.PostId == postId && x.UserId == userId)
@@ -122,6 +126,24 @@ namespace VKR.API.Services
 
             _context.PostLikes.Remove(like);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task AddCommentToPost(CreateCommentRequest commentRequest)
+        {
+            var entity = _mapper.Map<Comment>(commentRequest);
+            await _context.Comments.AddAsync(entity);
+            await _context.SaveChangesAsync();
+
+        }
+
+        public async Task<List<CommentModel>> GetAllCommentsByPostId(Guid postId)
+        {
+            var comments = await _context.Comments
+                .Include(x=>x.Author).ThenInclude(x => x.Avatar)
+                .Select(x => _mapper.Map<CommentModel>(x))
+                .ToListAsync();
+
+            return comments;
         }
 
 
