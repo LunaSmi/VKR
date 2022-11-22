@@ -18,5 +18,8 @@ namespace VKR.DAL.Entities
 
         public Guid PostId { get; set; }
         public virtual Post Post { get; set; } = null!;
+
+        public virtual ICollection<CommentLike>? CommentLikes { get; set; }
+
     }
 }

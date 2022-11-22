@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using VKR.API.Configs;
 using VKR.API.Exceptions;
@@ -63,7 +64,9 @@ namespace VKR.API.Services
 
             foreach (var post in posts)
             {
-                post.IsLikedByCurrentUser = IsLiked(post.Id, userId);
+                post.IsLikedByCurrentUser = IsPostLiked(post.Id, userId);
+                post.Comments = await GetAllCommentsByPostId(post.Id,userId);
+
             }
 
             return posts;
@@ -83,8 +86,8 @@ namespace VKR.API.Services
             {
                 throw new NotFoundException("Post");
             }
-            post.IsLikedByCurrentUser = IsLiked(postId,userId);
-            post.Comments = await GetAllCommentsByPostId(postId);
+            post.IsLikedByCurrentUser = IsPostLiked(postId,userId);
+            post.Comments = await GetAllCommentsByPostId(postId,userId);
 
             return post;
         }
@@ -97,7 +100,7 @@ namespace VKR.API.Services
 
         public async Task AddLikeToPost(Guid postId, Guid userId)
         {
-            if (IsLiked(postId, userId))
+            if (IsPostLiked(postId, userId))
             {
                 return;
             }
@@ -136,29 +139,72 @@ namespace VKR.API.Services
 
         }
 
-        public async Task<List<CommentModel>> GetAllCommentsByPostId(Guid postId)
+        public async Task<List<CommentModel>> GetAllCommentsByPostId(Guid postId,Guid userId)
         {
             var comments = await _context.Comments
                 .Include(x=>x.Author).ThenInclude(x => x.Avatar)
+                .Include(x=>x.CommentLikes).AsNoTracking()
                 .Select(x => _mapper.Map<CommentModel>(x))
-                .ToListAsync();
+            .ToListAsync();
+
+            foreach (var comment in comments)
+            {
+                comment.IsLikedByCurrentUser =IsCommentLiked(comment.Id, userId);
+            }
 
             return comments;
+        }
+
+        public async Task AddLikeToComment(Guid commentId, Guid userId)
+        {
+            if (IsCommentLiked(commentId, userId))
+            {
+                return;
+            }
+
+            var like = new CommentLike
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CommentId = commentId,
+            };
+            await _context.CommentLikes.AddAsync(like);
+            await _context.SaveChangesAsync();
+
+        }
+
+        public async Task RemoveLikeFromComment(Guid commentId, Guid userId)
+        {
+            var like = await _context.CommentLikes
+                .Where(x => x.CommentId == commentId && x.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (like == null)
+            {
+                return;
+            }
+
+            _context.CommentLikes.Remove(like);
+            await _context.SaveChangesAsync();
         }
 
 
 
 
-        private bool IsLiked(Guid postId, Guid userId)
+
+
+
+        private bool IsPostLiked(Guid postId, Guid userId)
         {
             return _context.PostLikes.Where(x => x.PostId == postId)
                 .Any(x => x.UserId == userId);
         }
 
-
-
-
-
+        private bool IsCommentLiked(Guid commentId, Guid userId)
+        {
+            return _context.CommentLikes.Where(x => x.CommentId == commentId)
+                .Any(x => x.UserId == userId);
+        }
 
     }
 }

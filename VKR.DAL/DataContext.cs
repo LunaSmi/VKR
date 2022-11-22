@@ -43,5 +43,6 @@ namespace VKR.DAL
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<PostContent> Contents => Set<PostContent>();
         public DbSet<PostLike> PostLikes => Set<PostLike>();
+        public DbSet<CommentLike> CommentLikes => Set<CommentLike>();
     }
 }

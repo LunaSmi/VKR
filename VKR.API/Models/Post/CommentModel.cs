@@ -7,6 +7,8 @@ namespace VKR.API.Models.Post
         public Guid Id { get; set; }
         public string? Text { get; set; }
         public DateTimeOffset PublicationDate { get; set; }
+        public long LikesCount { get; set; }
+        public bool IsLikedByCurrentUser { get; set; }
 
         public UserAvatarForCommentModel Author { get; set; } = null!;
 

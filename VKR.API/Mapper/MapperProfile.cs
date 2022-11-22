@@ -60,7 +60,9 @@ namespace VKR.API.Mapper
 
 
             CreateMap<VKR.DAL.Entities.Comment, CommentModel>()
-            .ForMember(d => d.Author, m => m.MapFrom(d => d.Author));
+            .ForMember(d => d.Author, m => m.MapFrom(d => d.Author))
+            .ForMember(d => d.LikesCount, m => m.MapFrom(s => s.CommentLikes!.Count));
+
 
 
         }

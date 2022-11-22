@@ -36,7 +36,8 @@ namespace VKR.API.Controllers
         [HttpGet]
         public async Task<List<CommentModel>> GetAllCommentsByPostId(Guid postId)
         {
-            return await _postsService.GetAllCommentsByPostId(postId);
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            return await _postsService.GetAllCommentsByPostId(postId, userId);
         }
 
 

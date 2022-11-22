@@ -35,7 +35,19 @@ namespace VKR.API.Controllers
             await _postsService.RemoveLikeFromPost(postId, userId);
         }
 
+        [HttpPost]
+        public async Task AddLikeToComment(Guid commentId)
+        {
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            await _postsService.AddLikeToComment(commentId, userId);
+        }
 
+        [HttpPost]
+        public async Task RemoveLikeFromComment(Guid commentId)
+        {
+            var userId = User.GetClaimValue<Guid>(ClaimNames.UserId);
+            await _postsService.RemoveLikeFromComment(commentId, userId);
+        }
 
 
     }
