@@ -37,11 +37,19 @@ namespace VKR.API.Controllers
 
         [HttpPost]
         public async Task<TokenModel> Login(TokenRequestModel model)
-            => await _authService.GetTokens(model.Login, model.Password);
+        {
+            try
+            {
+                var tokens = await _authService.GetTokens(model.Login, model.Password);
+                return tokens;
+            }
+            catch(Exception)
+            {
+                throw new HttpRequestException("not authorize", null, statusCode: System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
 
         [HttpPost]
-        [Authorize]
-        [ApiExplorerSettings(GroupName = "API")]
         public async Task<TokenModel> RefreshToken(RefreshTokenRequestModel model)
             => await _authService.GetTokensByRefreshToken(model.RefreshToken);
 

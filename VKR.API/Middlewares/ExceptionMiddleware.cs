@@ -25,6 +25,13 @@ namespace VKR.API.Middlewares
             {
                 await HandleExceptionAsync(httpContext, HttpStatusCode.NotFound, ex);
             }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode != null)
+                    httpContext.Response.StatusCode = (int)ex.StatusCode;
+
+                await HandleExceptionAsync(httpContext, (HttpStatusCode)httpContext.Response.StatusCode, ex);
+            }
             catch (Exception ex)
             {
                 await HandleExceptionAsync(httpContext, HttpStatusCode.BadRequest, ex);
